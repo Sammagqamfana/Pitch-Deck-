@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Recommender</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f9f9f9 0%, #e8f5e9 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: #2e7d32;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #388e3c;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .input-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #c8e6c9;
+            border-radius: 8px 0 0 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        button {
+            padding: 15px 30px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .example-chip {
+            padding: 10px 18px;
+            background-color: #e8f5e9;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .example-chip:hover {
+            background-color: #c8e6c9;
+            transform: translateY(-2px);
+        }
+
+        .results-section {
+            margin-top: 20px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #2e7d32;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #c8e6c9;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .recipe-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-image {
+            height: 180px;
+            background: linear-gradient(45deg, #81c784 0%, #4CAF50 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3.5rem;
+        }
+
+        .card-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: #2e7d32;
+        }
+
+        .card-ingredients {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            flex-grow: 1;
+        }
+
+        .card-description {
+            color: #444;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            font-size: 0.85rem;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            margin-top: auto;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.3rem;
+            color: #4CAF50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #e8f5e9;
+            border-top: 5px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 20px;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .tech-badge {
+            display: inline-block;
+            background-color: #e8f5e9;
+            color: #4CAF50;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 0 5px;
+            font-weight: 500;
+        }
+
+        .instructions {
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .instructions h2 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+            }
+            
+            input[type="text"] {
+                border-radius: 8px;
+                margin-bottom: 10px;
+            }
+            
+            button {
+                border-radius: 8px;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Recipe Recommender</h1>
+            <p class="subtitle">Find delicious recipes based on ingredients you have</p>
+        </header>
+
+        <div class="instructions">
+            <h2>How It Works</h2>
+            <ol>
+                <li>Enter ingredients you have (comma separated)</li>
+                <li>Our system matches your ingredients with our recipe database</li>
+                <li>Get personalized recipe recommendations</li>
+                <li>Save your favorite recipes for later</li>
+            </ol>
+        </div>
+
+        <div class="app-container">
+            <section class="input-section">
+                <h2>What ingredients do you have?</h2>
+                <p>Enter ingredients separated by commas (e.g., "chicken, tomatoes, pasta")</p>
+                
+                <div class="input-group">
+                    <input type="text" id="ingredients-input" placeholder="Search ingredients...">
+                    <button id="find-recipes">
+                        <i class="fas fa-search"></i> Find Recipes
+                    </button>
+                </div>
+                
+                <div class="examples">
+                    <div class="example-chip" data-ingredients="chicken, rice, vegetables">
+                        <i class="fas fa-utensils"></i> chicken, rice, vegetables
+                    </div>
+                    <div class="example-chip" data-ingredients="pasta, tomatoes, cheese">
+                        <i class="fas fa-utensils"></i> pasta, tomatoes, cheese
+                    </div>
+                    <div class="example-chip" data-ingredients="eggs, flour, milk">
+                        <i class="fas fa-utensils"></i> eggs, flour, milk
+                    </div>
+                    <div class="example-chip" data-ingredients="beef, potatoes, carrots">
+                        <i class="fas fa-utensils"></i> beef, potatoes, carrots
+                    </div>
+                </div>
+            </section>
+
+            <section class="results-section">
+                <h2 class="section-title">Suggested Recipes</h2>
+                <div id="results-container" class="results-grid">
+                    <!-- Recipe cards will be inserted here -->
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p>Recipe Recommender &copy; 2023 | Built with <span class="tech-badge">HTML5</span>
+                <span class="tech-badge">CSS3</span> <span class="tech-badge">JavaScript</span> 
+                <span class="tech-badge">Python</span> <span class="tech-badge">MySQL</span>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ingredientsInput = document.getElementById('ingredients-input');
+            const findRecipesBtn = document.getElementById('find-recipes');
+            const resultsContainer = document.getElementById('results-container');
+            const exampleChips = document.querySelectorAll('.example-chip');
+            
+            // Sample recipe data (simulates database records)
+            const sampleRecipes = [
+                {
+                    id: 1,
+                    title: "Chicken Tomato Pasta",
+                    ingredients: ["chicken", "tomatoes", "pasta", "garlic", "olive oil", "basil"],
+                    description: "A simple and delicious pasta dish with tender chicken and fresh tomatoes. Perfect for a quick weeknight dinner that the whole family will love.",
+                    prepTime: "15 mins",
+                    cookTime: "20 mins",
+                    difficulty: "Easy",
+                    category: "Main Course"
+                },
+                {
+                    id: 2,
+                    title: "Vegetable Stir Fry",
+                    ingredients: ["mixed vegetables", "rice", "soy sauce", "ginger", "garlic", "sesame oil"],
+                    description: "A quick and healthy stir fry that's perfect for a weeknight dinner. Packed with colorful vegetables and flavorful sauce.",
+                    prepTime: "10 mins",
+                    cookTime: "15 mins",
+                    difficulty: "Easy",
+                    category: "Main Course"
+                },
+                {
+                    id: 3,
+                    title: "Classic Beef Stew",
+                    ingredients: ["beef", "potatoes", "carrots", "onions", "beef broth", "thyme", "bay leaves"],
+                    description: "Hearty and comforting beef stew that's perfect for cold days. Slow-cooked to perfection for tender meat and rich flavors.",
+                    prepTime: "20 mins",
+                    cookTime: "2 hours",
+                    difficulty: "Medium",
+                    category: "Main Course"
+                },
+                {
+                    id: 4,
+                    title: "Fresh Garden Salad",
+                    ingredients: ["lettuce", "tomatoes", "cucumber", "olives", "feta cheese", "olive oil", "lemon juice"],
+                    description: "A refreshing salad with crisp vegetables and tangy feta cheese. Light and healthy side dish for any meal.",
+                    prepTime: "10 mins",
+                    cookTime: "0 mins",
+                    difficulty: "Easy",
+                    category: "Side Dish"
+                },
+                {
+                    id: 5,
+                    title: "Chocolate Chip Cookies",
+                    ingredients: ["flour", "chocolate chips", "butter", "sugar", "eggs", "vanilla", "baking soda"],
+                    description: "Classic homemade chocolate chip cookies with crispy edges and chewy centers. Always a crowd favorite!",
+                    prepTime: "15 mins",
+                    cookTime: "10 mins",
+                    difficulty: "Easy",
+                    category: "Dessert"
+                }
+            ];
+            
+            // Initialize with some recipes
+            displayRecipes(sampleRecipes);
+            
+            // Function to display recipe cards
+            function displayRecipes(recipes) {
+                resultsContainer.innerHTML = '';
+                
+                if (recipes.length === 0) {
+                    resultsContainer.innerHTML = `
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>No recipes found. Try different ingredients.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                recipes.forEach(recipe => {
+                    const card = document.createElement('div');
+                    card.className = 'recipe-card';
+                    card.innerHTML = `
+                        <div class="card-image">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">${recipe.title}</h3>
+                            <p class="card-ingredients"><strong>Ingredients:</strong> ${recipe.ingredients.join(', ')}</p>
+                            <p class="card-description">${recipe.description}</p>
+                            <div class="card-meta">
+                                <span class="meta-item"><i class="fas fa-clock"></i> ${recipe.prepTime} prep</span>
+                                <span class="meta-item"><i class="fas fa-fire"></i> ${recipe.cookTime} cook</span>
+                                <span class="meta-item"><i class="fas fa-chef-hat"></i> ${recipe.difficulty}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add click event to show more details
+                    card.addEventListener('click', () => {
+                        alert(`Recipe Details: ${recipe.title}\n\nCooking Time: ${recipe.cookTime}\nDifficulty: ${recipe.difficulty}\nCategory: ${recipe.category}\n\nFull instructions would be displayed here in a complete application.`);
+                    });
+                    
+                    resultsContainer.appendChild(card);
+                });
+            }
+            
+            // Function to simulate API call
+            function getRecipesFromAPI(ingredients) {
+                // Show loading state
+                resultsContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Finding recipes for: ${ingredients.join(', ')}</p>
+                    </div>
+                `;
+                
+                // In a real application, this would be an actual API call to the backend
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        // Simulate finding recipes based on ingredients
+                        const foundRecipes = sampleRecipes.filter(recipe => 
+                            recipe.ingredients.some(ingredient => 
+                                ingredients.some(inputIngredient => 
+                                    ingredient.toLowerCase().includes(inputIngredient.trim().toLowerCase())
+                                )
+                            )
+                        );
+                        
+                        // If no specific recipes found, return some sample recipes
+                        resolve(foundRecipes.length > 0 ? foundRecipes : sampleRecipes);
+                    }, 2000); // Simulate network delay
+                });
+            }
+            
+            // Event listener for the Find Recipes button
+            findRecipesBtn.addEventListener('click', async function() {
+                const ingredients = ingredientsInput.value.split(',').filter(item => item.trim() !== '');
+                
+                if (ingredients.length === 0) {
+                    alert('Please enter at least one ingredient');
+                    return;
+                }
+                
+                const recipes = await getRecipesFromAPI(ingredients);
+                displayRecipes(recipes);
+            });
+            
+            // Add event listeners to example chips
+            exampleChips.forEach(chip => {
+                chip.addEventListener('click', function() {
+                    const ingredients = this.getAttribute('data-ingredients');
+                    ingredientsInput.value = ingredients;
+                });
+            });
+            
+            // Allow pressing Enter to search
+            ingredientsInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    findRecipesBtn.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
